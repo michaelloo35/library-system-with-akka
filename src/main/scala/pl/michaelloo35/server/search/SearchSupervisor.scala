@@ -6,7 +6,7 @@ import akka.actor.SupervisorStrategy.Restart
 import akka.actor.{Actor, ActorRef, OneForOneStrategy, Props, SupervisorStrategy}
 import akka.event.Logging
 import akka.routing.FromConfig
-import pl.michaelloo35.server.search.dbmodel.{DbSearchRequest, DbSearchResponse, DbSearchResponseFound, DbSearchResponseNotFound}
+import pl.michaelloo35.server.search.model.{WorkerSearchRequest, WorkerSearchResponse, WorkerSearchResponseFound, WorkerSearchResponseNotFound}
 import pl.michaelloo35.{SearchFailure, SearchRequest, SearchSuccess}
 
 import scala.collection.mutable.ArrayBuffer
@@ -18,8 +18,10 @@ class SearchSupervisor extends Actor {
 
   // helpful Array to eliminate duplicates
   val completedRequests: ArrayBuffer[Boolean] = new ArrayBuffer[Boolean]()
+
   // pool of db1 workers
   var db1Router: ActorRef = _
+
   // pool of db2 workers
   var db2Router: ActorRef = _
 
@@ -29,24 +31,23 @@ class SearchSupervisor extends Actor {
       val id = requestCounter.getAndIncrement()
       completedRequests.insert(id, false)
 
-      // order search in db1
-      db1Router ! DbSearchRequest(title, sender, id)
+      // search in db1
+      db1Router ! WorkerSearchRequest(title, sender, id)
 
-      // order search in db1
-      db2Router ! DbSearchRequest(title, sender, id)
+      // search in db2
+      db2Router ! WorkerSearchRequest(title, sender, id)
 
-    case res: DbSearchResponse =>
-
+    case res: WorkerSearchResponse =>
       // check if duplicate
       if (!completedRequests(res.id)) {
         completedRequests(res.id) = true
 
         // handle worker response
         res match {
-          case DbSearchResponseFound(title, price, requestClient, _) =>
+          case WorkerSearchResponseFound(title, price, requestClient, _) =>
             requestClient ! SearchSuccess(title, price)
 
-          case DbSearchResponseNotFound(title, requestClient, _) =>
+          case WorkerSearchResponseNotFound(title, requestClient, _) =>
             requestClient ! SearchFailure(title, "Book not found")
         }
       }

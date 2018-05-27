@@ -15,6 +15,7 @@ object Client extends App {
   val clientActor = system.actorOf(Props.create(classOf[ClientActor]), "client")
 
   val br = new BufferedReader(new InputStreamReader(System.in))
+
   while (true) {
     val line = br.readLine
     clientActor ! line

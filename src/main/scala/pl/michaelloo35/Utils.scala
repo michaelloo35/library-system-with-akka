@@ -12,9 +12,9 @@ case class StreamRequest(title: String) extends BookRequest
 // RESPONSES
 sealed trait BookResponse
 
-case class OrderReply(message: String) extends BookResponse
+case class OrderResponse(message: String) extends BookResponse
 
-case class StreamReply(line: String) extends BookResponse
+case class StreamResponse(line: String) extends BookResponse
 
 case class SearchSuccess(title: String, price: Double) extends BookResponse
 
