@@ -7,7 +7,7 @@ import akka.actor.{Actor, ActorRef, OneForOneStrategy, Props, SupervisorStrategy
 import akka.event.Logging
 import akka.routing.FromConfig
 import pl.michaelloo35.server.search.model.{WorkerSearchRequest, WorkerSearchResponse, WorkerSearchResponseFound, WorkerSearchResponseNotFound}
-import pl.michaelloo35.{SearchFailure, SearchRequest, SearchSuccess}
+import pl.michaelloo35._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
@@ -16,9 +16,8 @@ class SearchSupervisor extends Actor {
   val log = Logging(context.system, this)
   val requestCounter = new AtomicInteger(0)
 
-  // helpful Array to eliminate duplicates
-  // TODO Change into Tri-state array
-  val completedRequests: ArrayBuffer[Boolean] = new ArrayBuffer[Boolean]()
+  // helpful Array to eliminate duplicates Tri-state because if we'll get NotFound then we have to wait for results from second database
+  val completedRequests: ArrayBuffer[State] = new ArrayBuffer[State]()
 
   // pool of db1 workers
   var db1Router: ActorRef = _
@@ -30,7 +29,7 @@ class SearchSupervisor extends Actor {
     case SearchRequest(title) =>
       // id to eliminate duplicates
       val id = requestCounter.getAndIncrement()
-      completedRequests.insert(id, false)
+      completedRequests.insert(id, NotReplied)
 
       // search in db1
       db1Router ! WorkerSearchRequest(title, sender, id)
@@ -40,24 +39,32 @@ class SearchSupervisor extends Actor {
 
     case res: WorkerSearchResponse =>
       // check if duplicate
-      if (!completedRequests(res.id)) {
-        completedRequests(res.id) = true
 
-        // handle worker response
-        res match {
-          case WorkerSearchResponseFound(title, price, requestClient, _) =>
-            requestClient ! SearchSuccess(title, price)
+      completedRequests(res.id) match {
+        case NotReplied =>
+          res match {
+            case WorkerSearchResponseFound(title, price, requestClient, _) =>
+              completedRequests(res.id) = Replied
+              requestClient ! SearchSuccess(title, price)
 
-          case WorkerSearchResponseNotFound(title, requestClient, _) =>
-            requestClient ! SearchFailure(title, "Book not found")
-        }
+            case WorkerSearchResponseNotFound(_, _, _) =>
+              completedRequests(res.id) = Waiting
+
+          }
+
+        case Waiting =>
+          res match {
+            case WorkerSearchResponseFound(title, price, requestClient, _) =>
+              completedRequests(res.id) = Replied
+              requestClient ! SearchSuccess(title, price)
+
+            case WorkerSearchResponseNotFound(title, requestClient, _) =>
+              completedRequests(res.id) = Replied
+              requestClient ! SearchFailure(title, "Book not found")
+          }
+
+        case Replied => Unit
       }
-
-      // else do nothing
-      else
-        Unit
-
-
   }
 
   override def preStart(): Unit = {

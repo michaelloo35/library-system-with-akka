@@ -21,3 +21,11 @@ case class StreamReply(line: String) extends BookResponse
 case class SearchSuccess(title: String, price: Double) extends BookResponse
 
 case class SearchFailure(title: String, reason: String) extends BookResponse
+
+// NEW TYPE
+
+sealed abstract class State
+
+case object NotReplied extends State
+case object Waiting extends State
+case object Replied extends State
