@@ -18,6 +18,8 @@ class OrderWorker extends Actor {
 
   override def receive: Receive = {
     case WorkerOrderRequest(title, price, requestClient) =>
+
+      // bad synchronization ofc.. realized too late to change
       this.getClass.synchronized {
         val pw = new PrintWriter(new FileOutputStream(new File(Paths.get(ordersPath).toUri),true))
         pw.append(Calendar.getInstance().getTime.toString + " title " + title + " price " + price + "\n")
