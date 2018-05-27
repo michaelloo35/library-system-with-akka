@@ -17,6 +17,7 @@ class SearchSupervisor extends Actor {
   val requestCounter = new AtomicInteger(0)
 
   // helpful Array to eliminate duplicates
+  // TODO Change into Tri-state array
   val completedRequests: ArrayBuffer[Boolean] = new ArrayBuffer[Boolean]()
 
   // pool of db1 workers

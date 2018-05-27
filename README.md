@@ -12,4 +12,8 @@
 ### Server node can be divided into three parts:
 - main actor that defers requests to specialty actors
 - three specialty actors that commands concrete tasks to workers
-- workers are kept as routers within specialty actors ( their thread pools are specified in .conf files ) 
+- workers are kept as routers within specialty actors ( their thread pools are specified in .conf files )
+
+
+#### book parts source:
+http://www.fulltextarchive.com/ 

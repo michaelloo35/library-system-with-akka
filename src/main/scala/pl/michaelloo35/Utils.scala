@@ -14,7 +14,9 @@ sealed trait BookResponse
 
 case class OrderResponse(message: String) extends BookResponse
 
-case class StreamResponse(line: String) extends BookResponse
+case class StreamFailure(reason: String) extends BookResponse
+
+case class StreamReply(line: String) extends BookResponse
 
 case class SearchSuccess(title: String, price: Double) extends BookResponse
 

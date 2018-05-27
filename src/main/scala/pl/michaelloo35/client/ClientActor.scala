@@ -14,10 +14,14 @@ class ClientActor extends Actor {
       remoteServerActor ! SearchRequest(s.split(":")(1))
     case s: String if s.startsWith("order:") =>
       remoteServerActor ! OrderRequest(s.split(":")(1))
+    case s: String if s.startsWith("stream:") =>
+      remoteServerActor ! StreamRequest(s.split(":")(1))
 
-    case r: OrderResponse => println(r.message)
     case r: SearchSuccess => println(r.title + " price is " + r.price)
     case r: SearchFailure => println(r.reason)
+    case r: OrderResponse => println(r.message)
+    case r: StreamFailure => println(r.reason)
+    case r: StreamReply => println(r.line)
     case _ => println("Unknown message")
   }
 

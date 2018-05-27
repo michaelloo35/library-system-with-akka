@@ -15,11 +15,11 @@ import scala.util.{Failure, Success}
 
 class OrderSupervisor extends Actor {
   private implicit val executionContext: ExecutionContextExecutor = context.system.dispatcher
+  private implicit val duration: Timeout = 15 seconds
   val log = Logging(context.system, this)
   val searchSupervisorPathLocal = "akka.tcp://server_system@127.0.0.1:3552/user/server/search_supervisor"
   var searchSupervisor: ActorSelection = _
   var orderRouter: ActorRef = _
-  implicit val duration: Timeout = 15 seconds
 
 
   override def receive: Receive = {
