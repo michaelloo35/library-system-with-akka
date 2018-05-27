@@ -14,12 +14,18 @@ abstract class DbWorker extends Actor {
 
   override def receive: Receive = {
     case WorkerSearchRequest(title, requestClient, id) =>
-      Source
-        .fromFile(new File(Server.getClass.getResource(databasePath).toURI))
-        .getLines
-        .find(s => s.split(":")(0) == title) match {
-        case Some(book) => sender ! WorkerSearchResponseFound(title, book.split(":")(1).toDouble, requestClient, id)
-        case None => sender ! WorkerSearchResponseNotFound(title, requestClient, id)
+      try {
+        Source
+          .fromFile(new File(Server.getClass.getResource(databasePath).toURI))
+          .getLines
+          .find(s => s.split(":")(0) == title) match {
+          case Some(book) => sender ! WorkerSearchResponseFound(title, book.split(":")(1).toDouble, requestClient, id)
+          case None => sender ! WorkerSearchResponseNotFound(title, requestClient, id)
+        }
+      }
+      catch {
+        // errors with file reading results as BookNotFound
+        case _: Throwable => sender ! WorkerSearchResponseNotFound(title, requestClient, id)
       }
   }
 
