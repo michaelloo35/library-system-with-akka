@@ -1,11 +1,13 @@
 package pl.michaelloo35.server
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.SupervisorStrategy.Restart
+import akka.actor.{Actor, ActorRef, OneForOneStrategy, Props, SupervisorStrategy}
 import akka.event.Logging
+import scala.concurrent.duration._
 import pl.michaelloo35.server.order.OrderSupervisor
-import pl.michaelloo35.{OrderRequest, SearchRequest, StreamRequest}
 import pl.michaelloo35.server.search.SearchSupervisor
 import pl.michaelloo35.server.stream.StreamSupervisor
+import pl.michaelloo35.{OrderRequest, SearchRequest, StreamRequest}
 
 
 class ServerActor extends Actor {
@@ -27,4 +29,11 @@ class ServerActor extends Actor {
     orderSupervisor = context.actorOf(Props[OrderSupervisor], "order_supervisor")
     streamSupervisor = context.actorOf(Props[StreamSupervisor], "stream_supervisor")
   }
+
+
+  override def supervisorStrategy: SupervisorStrategy =
+    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
+      case _: Exception ⇒ Restart
+    }
+
 }
